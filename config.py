@@ -42,7 +42,7 @@ class DetectorConfig:
     weights_path: str = str(WEIGHTS_DIR / "yolo11s.pt")
     confidence_threshold: float = 0.35
     iou_threshold: float = 0.45
-    device: str = "cuda"  # "cuda", "cpu", or "cuda:0" etc.
+    device: str = "auto"  # "auto", "cuda", "mps", "cpu", or "cuda:0" etc.
     image_size: int = 640
     classes: List[int] = field(default_factory=lambda: list(VEHICLE_CLASS_MAP.keys()))
 

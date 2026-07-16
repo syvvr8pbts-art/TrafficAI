@@ -14,7 +14,7 @@ from typing import List
 import numpy as np
 
 from config import DetectorConfig, VEHICLE_CLASS_MAP
-from utils import setup_logger
+from utils import resolve_device, setup_logger
 
 logger = setup_logger(__name__)
 
@@ -33,6 +33,9 @@ class VehicleDetector:
 
     def __init__(self, cfg: DetectorConfig) -> None:
         self.cfg = cfg
+        # Resolve the requested device once, centrally, at startup.
+        self.device = resolve_device(cfg.device)
+        logger.info("Running on device: %s", self.device)
         self._model = self._load_model()
 
     def _load_model(self):
@@ -43,7 +46,7 @@ class VehicleDetector:
                 "ultralytics is required. Install with: pip install ultralytics"
             ) from exc
 
-        logger.info("Loading YOLO weights from %s (device=%s)", self.cfg.weights_path, self.cfg.device)
+        logger.info("Loading YOLO weights from %s (device=%s)", self.cfg.weights_path, self.device)
         return YOLO(self.cfg.weights_path)
 
     def detect(self, frame: np.ndarray) -> List[Detection]:
@@ -54,7 +57,7 @@ class VehicleDetector:
             iou=self.cfg.iou_threshold,
             imgsz=self.cfg.image_size,
             classes=self.cfg.classes,
-            device=self.cfg.device,
+            device=self.device,
             verbose=False,
         )
 

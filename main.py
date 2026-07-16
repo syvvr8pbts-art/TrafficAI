@@ -40,7 +40,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--weights", default=cfg.detector.weights_path, help="Path to YOLO weights (.pt)")
     parser.add_argument("--lanes", default=cfg.lanes_config_path, help="Path to lane polygon JSON config")
     parser.add_argument("--output-dir", default=cfg.output_dir, help="Directory for saved video/report output")
-    parser.add_argument("--device", default=cfg.detector.device, choices=["cuda", "cpu"], help="Inference device")
+    parser.add_argument("--device", default=cfg.detector.device, choices=["auto", "cuda", "mps", "cpu"], help="Inference device (auto picks CUDA > MPS > CPU)")
     parser.add_argument("--conf", type=float, default=cfg.detector.confidence_threshold, help="Detection confidence threshold")
     parser.add_argument("--night-enhance", action="store_true", help="Enable CLAHE low-light enhancement")
     parser.add_argument("--frame-skip", type=int, default=cfg.preprocess.frame_skip, help="Process every Nth+1 frame")
