@@ -76,6 +76,59 @@ class PreprocessConfig:
 
 
 @dataclass
+class SignalConfig:
+    """Bounds and fixed phases for a simulated traffic signal. The decision
+    engine picks a green duration inside [min_green, max_green]; yellow and
+    all-red (clearance) phases are fixed.
+    """
+    min_green_seconds: int = 10
+    max_green_seconds: int = 60
+    yellow_seconds: int = 3
+    all_red_seconds: int = 2  # inter-phase clearance where every lane is red
+    history_length: int = 20  # number of recent phase transitions to retain
+
+
+@dataclass
+class DecisionConfig:
+    """Weights and knobs for the AI decision engine. The engine produces a
+    per-lane `demand_score` in [0, 1] as a weighted blend of live occupancy
+    ratio, normalized cumulative count, and congestion severity -- plus an
+    optional vehicle-type term when per-lane type counts are available. The
+    engine only ranks lanes; it does NOT compute signal timings (that is the
+    signal controller's job).
+    """
+    # Base-metric weights. When the optional type term is available it is
+    # folded in and the blend is renormalized over whichever terms are present,
+    # so these do not need to sum to 1.0.
+    occupancy_weight: float = 0.4   # weight of live occupancy ratio
+    count_weight: float = 0.2       # weight of normalized cumulative count
+    congestion_weight: float = 0.4  # weight of congestion-level severity
+    type_weight: float = 0.3        # weight of vehicle-type intensity (optional)
+
+    # Numeric severity for each congestion label emitted by TrafficAnalyzer.
+    congestion_severity: Dict[str, float] = field(
+        default_factory=lambda: {"green": 0.0, "yellow": 0.4, "orange": 0.7, "red": 1.0}
+    )
+    # Relative "pressure" each vehicle type contributes; heavier / higher
+    # priority vehicles raise a lane's demand. Used only when per-lane type
+    # counts are present in the analyzer summary.
+    vehicle_type_weights: Dict[str, float] = field(
+        default_factory=lambda: {
+            "bicycle": 0.3,
+            "motorcycle": 0.5,
+            "auto_rickshaw": 0.7,
+            "car": 1.0,
+            "bus": 2.0,
+            "truck": 2.0,
+            "ambulance": 3.0,
+        }
+    )
+    # Lanes whose demand_score is below this are treated as effectively empty
+    # for service-ordering purposes.
+    empty_demand_threshold: float = 0.02
+
+
+@dataclass
 class AppConfig:
     video_source: str = str(VIDEOS_DIR / "sample.mp4")
     lanes_config_path: str = str(CONFIGS_DIR / "lanes_example.json")
@@ -86,6 +139,8 @@ class AppConfig:
     tracker: TrackerConfig = field(default_factory=TrackerConfig)
     analysis: AnalysisConfig = field(default_factory=AnalysisConfig)
     preprocess: PreprocessConfig = field(default_factory=PreprocessConfig)
+    signal: SignalConfig = field(default_factory=SignalConfig)
+    decision: DecisionConfig = field(default_factory=DecisionConfig)
 
 
 def load_config() -> AppConfig:
