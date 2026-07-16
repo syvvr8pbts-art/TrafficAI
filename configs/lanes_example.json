@@ -1,0 +1,14 @@
+{
+  "lanes": [
+    {
+      "name": "lane_1_northbound",
+      "points": [[100, 720], [500, 720], [450, 300], [250, 300]],
+      "real_world_area_sqm": 60.0
+    },
+    {
+      "name": "lane_2_southbound",
+      "points": [[520, 720], [920, 720], [700, 300], [500, 300]],
+      "real_world_area_sqm": 60.0
+    }
+  ]
+}
