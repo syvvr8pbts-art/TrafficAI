@@ -1,0 +1,87 @@
+# ==========================
+# Python
+# ==========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+
+# ==========================
+# Virtual Environments
+# ==========================
+venv/
+venv311/
+.env/
+.env.*
+
+# ==========================
+# IDEs
+# ==========================
+.vscode/
+.idea/
+*.code-workspace
+
+# ==========================
+# OS Files
+# ==========================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ==========================
+# Python Packaging
+# ==========================
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# ==========================
+# Logs
+# ==========================
+*.log
+
+# ==========================
+# Testing
+# ==========================
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+
+# ==========================
+# Jupyter
+# ==========================
+.ipynb_checkpoints/
+
+# ==========================
+# Project Outputs
+# ==========================
+output/
+reports/
+results/
+*.csv
+
+# Ignore generated videos/images
+*.mp4
+*.avi
+*.mov
+
+# Uncomment if snapshots are generated automatically
+# snapshots/
+
+# ==========================
+# Model Checkpoints
+# ==========================
+*.pt
+!weights/
+!weights/*.pt
+
+# ==========================
+# Temporary Files
+# ==========================
+*.tmp
+*.temp
+*.bak
