@@ -1,6 +1,6 @@
 {
-  "session_start": "2026-07-18T12:32:36.459861",
-  "elapsed_seconds": 35.420236,
+  "session_start": "2026-07-18T22:18:15.371305",
+  "elapsed_seconds": 26.670323,
   "total_unique_vehicles": 95,
   "counts_by_type": {
     "car": 55,
@@ -29,7 +29,6 @@
     }
   },
   "vehicles_per_minute": {
-    "2026-07-18 12:32": 50,
-    "2026-07-18 12:33": 45
+    "2026-07-18 22:18": 95
   }
 }

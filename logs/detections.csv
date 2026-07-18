@@ -1,0 +1,4 @@
+timestamp,frame_id,count_car,count_bike,count_cycle,count_auto-rickshaw,count_bus,count_truck,count_ambulance,total,density,occupancy
+1784393201.019101,1,10,4,1,0,0,2,0,17,MEDIUM,22.4
+1784393201.0630379,2,10,4,1,0,0,1,0,16,MEDIUM,20.3
+1784393201.092715,3,10,4,1,0,0,1,0,16,MEDIUM,21.1
