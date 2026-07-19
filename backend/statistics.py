@@ -9,8 +9,11 @@ were seen per frame.
 How uniqueness is achieved:
   * The existing ByteTrack tracker (root ``tracker.VehicleTracker``) is reused to
     assign a persistent ``track_id`` to every detection across frames.
-  * A configurable virtual counting line is placed across the frame. A vehicle is
-    counted exactly ONCE, the first time its tracked centroid CROSSES that line.
+  * A vehicle is counted exactly ONCE, as soon as its track has been continuously
+    tracked for the confirmation window (>= confirm_frames, default 0.3s). No
+    counting-line crossing is required, so slow-moving / congested traffic that
+    never crosses a line is still counted. (The line helpers are retained but no
+    longer gate cumulative counting.)
   * A ``counted_ids`` set per class guarantees a given ``track_id`` is never
     counted twice, so the totals only ever increase.
 
@@ -95,8 +98,6 @@ class TrafficStatistics:
         self._totals: Dict[str, int] = {STAT_KEYS[c]: 0 for c in CANONICAL_CLASSES}
         # counted_ids[stat_key] = set of track_ids already counted (never recount)
         self._counted_ids: Dict[str, set] = {STAT_KEYS[c]: set() for c in CANONICAL_CLASSES}
-        # last known side of each track relative to the line: track_id -> 0/1
-        self._track_side: Dict[int, int] = {}
         # consecutive frames each track has been continuously observed
         self._track_age: Dict[int, int] = {}
         self._last_dims = default_size
@@ -124,7 +125,6 @@ class TrafficStatistics:
         for k in self._totals:
             self._totals[k] = 0
             self._counted_ids[k].clear()
-        self._track_side.clear()
         self._track_age.clear()
         logger.info("Session statistics reset.")
 
@@ -195,13 +195,11 @@ class TrafficStatistics:
                 stat_key = STAT_KEYS.get(canonical)
                 if stat_key is None:
                     continue
-                side = self._side(cx, cy)
-                prev = self._track_side.get(track_id)
-                self._track_side[track_id] = side
-                # Count once: a CONFIRMED (>= confirm_frames) track that CROSSES
-                # the line, never the same track_id twice.
-                confirmed = self._track_age[track_id] >= self._confirm_frames
-                if (confirmed and prev is not None and side != prev
+                # Count once: ANY track confirmed as stable (tracked continuously
+                # for >= confirm_frames). No counting-line crossing is required,
+                # so vehicles in slow/congested traffic that never cross a line
+                # are still counted. counted_ids ensures each track_id counts once.
+                if (self._track_age[track_id] >= self._confirm_frames
                         and track_id not in self._counted_ids[stat_key]):
                     self._counted_ids[stat_key].add(track_id)
                     self._totals[stat_key] += 1
@@ -211,7 +209,6 @@ class TrafficStatistics:
             for tid in list(self._track_age):
                 if tid not in present_ids:
                     self._track_age.pop(tid, None)
-                    self._track_side.pop(tid, None)
 
         payload["tracked_objects"] = tracked_objects
         payload["statistics"] = self.snapshot()
