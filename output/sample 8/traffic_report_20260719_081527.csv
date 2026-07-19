@@ -1,0 +1,12 @@
+metric,value
+total_unique_vehicles,99
+count_bus,6
+count_car,68
+count_auto_rickshaw,6
+count_ambulance,2
+count_truck,14
+count_motorcycle,3
+count_lane_lane_1_northbound,10
+congestion_lane_lane_1_northbound,yellow
+count_lane_lane_2_southbound,22
+congestion_lane_lane_2_southbound,red

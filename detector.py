@@ -13,7 +13,7 @@ from typing import List
 
 import numpy as np
 
-from config import DetectorConfig, VEHICLE_CLASS_MAP
+from config import DetectorConfig
 from utils import resolve_device, setup_logger
 
 logger = setup_logger(__name__)
@@ -51,15 +51,20 @@ class VehicleDetector:
 
     def detect(self, frame: np.ndarray) -> List[Detection]:
         """Run detection on a single BGR frame and return vehicle detections only."""
-        results = self._model.predict(
+        predict_kwargs = dict(
             source=frame,
             conf=self.cfg.confidence_threshold,
             iou=self.cfg.iou_threshold,
             imgsz=self.cfg.image_size,
-            classes=self.cfg.classes,
             device=self.device,
             verbose=False,
         )
+        # Only apply a class filter when explicitly configured; None => detect
+        # every class the model was trained on (matches the reference script).
+        if self.cfg.classes is not None:
+            predict_kwargs["classes"] = self.cfg.classes
+
+        results = self._model.predict(**predict_kwargs)
 
         detections: List[Detection] = []
         if not results:
@@ -73,8 +78,11 @@ class VehicleDetector:
         confs = boxes.conf.cpu().numpy()
         cls_ids = boxes.cls.cpu().numpy().astype(int)
 
+        # Use the loaded model's OWN class names (works for the custom model and
+        # the stock COCO checkpoint alike). Backend alias mapping normalizes them.
+        model_names = getattr(self._model, "names", {}) or {}
         for box, conf, cls_id in zip(xyxy, confs, cls_ids):
-            class_name = VEHICLE_CLASS_MAP.get(int(cls_id), f"class_{cls_id}")
+            class_name = model_names.get(int(cls_id), f"class_{cls_id}")
             detections.append(
                 Detection(
                     xyxy=box.astype(np.float32),

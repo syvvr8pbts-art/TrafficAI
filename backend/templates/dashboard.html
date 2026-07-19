@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TrafficAI · Intelligent Traffic Control Center</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}" />
+</head>
+<body class="is-booting">
+  <!-- Loading screen (hidden after first successful /state) -->
+  <div id="loader" class="loader">
+    <div class="loader__spinner"></div>
+    <p class="loader__text">Connecting to Traffic Control Backend…</p>
+  </div>
+
+  <!-- Connection-lost banner (shown ONLY while polling is failing) -->
+  <div id="connBanner" class="conn-banner hidden">
+    <span class="conn-banner__dot"></span>
+    Connection lost — retrying automatically…
+  </div>
+
+  <!-- Header -->
+  <header class="topbar glass">
+    <div class="brand">
+      <div class="brand__logo">🚦</div>
+      <div class="brand__text">
+        <h1>AI-Based Intelligent Traffic Management System</h1>
+        <p class="brand__sub">Smart City · Traffic Command Center</p>
+      </div>
+    </div>
+    <div class="topbar__status">
+      <div class="clock-block">
+        <span id="clockTime" class="clock-time">--:--:--</span>
+        <span id="clockDate" class="clock-date">—</span>
+      </div>
+      <div id="connChip" class="status-chip status-chip--down">
+        <span class="status-chip__dot"></span>
+        <span id="connText">Connecting</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Ambulance emergency banner (shown ONLY when backend ambulance === true) -->
+  <div id="emergencyBar" class="emergency-bar hidden">
+    <span class="emergency-bar__icon">🚑</span>
+    <span class="emergency-bar__text">EMERGENCY PRIORITY ACTIVE</span>
+    <span id="emergencyLane" class="emergency-bar__lane"></span>
+  </div>
+
+  <main class="grid">
+    <!-- LIVE VIDEO (largest element) -->
+    <section class="card video-card" style="grid-area: video">
+      <div class="card__head">
+        <h2>Live Traffic Feed</h2>
+        <div class="video-badges">
+          <span class="badge badge--live"><span class="badge__pulse"></span>LIVE</span>
+          <span class="badge" id="fpsBadge">-- FPS</span>
+          <span class="badge" id="frameBadge">frame --</span>
+        </div>
+      </div>
+      <div class="video-frame">
+        <img id="videoFeed" src="{{ url_for('video_feed') }}" alt="Processed traffic stream" />
+        <div class="video-frame__glow"></div>
+      </div>
+      <!-- AI decision strip (composed from live backend fields) -->
+      <div class="ai-decision">
+        <span class="ai-decision__tag">AI DECISION</span>
+        <span id="aiDecision" class="ai-decision__text v">--</span>
+      </div>
+    </section>
+
+    <!-- SIGNAL STATUS -->
+    <section class="card" style="grid-area: signal">
+      <div class="card__head"><h2>Signal Status</h2></div>
+      <div class="signal-body">
+        <div class="traffic-light">
+          <span class="bulb bulb--red" data-bulb="red"></span>
+          <span class="bulb bulb--yellow" data-bulb="yellow"></span>
+          <span class="bulb bulb--green" data-bulb="green"></span>
+        </div>
+        <div class="countdown">
+          <svg class="ring" viewBox="0 0 120 120">
+            <circle class="ring__track" cx="60" cy="60" r="52"></circle>
+            <circle id="countdownRing" class="ring__value ring--green" cx="60" cy="60" r="52"></circle>
+          </svg>
+          <div class="ring__center">
+            <span id="countdown" class="ring__num v">--</span>
+            <span class="ring__unit">sec</span>
+          </div>
+        </div>
+      </div>
+      <div class="signal-meta">
+        <div class="meta"><span class="meta__label">Current Lane</span><span id="curLane" class="meta__value v">--</span></div>
+        <div class="meta"><span class="meta__label">Phase</span><span id="curSignal" class="meta__value v">--</span></div>
+        <div class="meta"><span class="meta__label">Next Lane</span><span id="nextLane" class="meta__value v">--</span></div>
+      </div>
+    </section>
+
+    <!-- LANE STATUS -->
+    <section class="card" style="grid-area: lanes">
+      <div class="card__head"><h2>Lane Status</h2></div>
+      <div class="lane-grid" id="laneGrid">
+        <div class="skeleton skeleton--lane"></div>
+        <div class="skeleton skeleton--lane"></div>
+        <div class="skeleton skeleton--lane"></div>
+        <div class="skeleton skeleton--lane"></div>
+      </div>
+    </section>
+
+    <!-- METRICS: density / occupancy / recommended green -->
+    <section class="card" style="grid-area: metrics">
+      <div class="card__head"><h2>Traffic Intelligence</h2></div>
+      <div class="metrics-row">
+        <div class="metric">
+          <div class="metric__top">
+            <span class="metric__label">Traffic Density</span>
+            <span id="densityBadge" class="chip chip--muted v">--</span>
+          </div>
+          <div class="bar"><div id="densityBar" class="bar__fill"></div></div>
+        </div>
+        <div class="metric metric--ring">
+          <svg class="ring ring--sm" viewBox="0 0 120 120">
+            <circle class="ring__track" cx="60" cy="60" r="46"></circle>
+            <circle id="occupancyRing" class="ring__value ring--blue" cx="60" cy="60" r="46"></circle>
+          </svg>
+          <div class="ring__center">
+            <span id="occupancy" class="ring__num ring__num--sm v">--</span>
+            <span class="ring__unit">occ.</span>
+          </div>
+          <span class="metric__caption">Lane Occupancy</span>
+        </div>
+        <div class="metric metric--highlight">
+          <span class="metric__label">Recommended Green</span>
+          <div class="rec-green"><span id="recGreen" class="v">--</span><small>sec</small></div>
+          <span class="metric__caption">AI-optimized signal time</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- STATUS: intersection + emergency -->
+    <section class="card status-card" style="grid-area: status">
+      <div class="status-col">
+        <span class="status-col__label">Intersection Clearance</span>
+        <div id="intersection" class="status-badge status-badge--muted v">--</div>
+      </div>
+      <div class="status-col">
+        <span class="status-col__label">Emergency Status</span>
+        <div id="emergency" class="status-badge status-badge--muted v">--</div>
+      </div>
+    </section>
+
+    <!-- VEHICLE COUNTS (current frame) -->
+    <section class="card" style="grid-area: counts">
+      <div class="card__head">
+        <h2>Vehicles · Session Total</h2>
+        <span class="badge" id="totalBadge">-- total</span>
+      </div>
+      <div class="counts-grid" id="countsGrid">
+        <div class="skeleton skeleton--count"></div><div class="skeleton skeleton--count"></div>
+        <div class="skeleton skeleton--count"></div><div class="skeleton skeleton--count"></div>
+        <div class="skeleton skeleton--count"></div><div class="skeleton skeleton--count"></div>
+        <div class="skeleton skeleton--count"></div>
+      </div>
+    </section>
+
+    <!-- SESSION STATISTICS (cumulative) -->
+    <section class="card" style="grid-area: stats">
+      <div class="card__head"><h2>Session Statistics</h2></div>
+      <div class="stats-list" id="statsList">
+        <div class="skeleton skeleton--row"></div><div class="skeleton skeleton--row"></div>
+        <div class="skeleton skeleton--row"></div><div class="skeleton skeleton--row"></div>
+      </div>
+    </section>
+
+    <!-- EVENT LOG / RECENT ACTIVITY -->
+    <section class="card" style="grid-area: events">
+      <div class="card__head"><h2>Recent Activity</h2><span class="badge">Event Log</span></div>
+      <ul class="event-log" id="eventLog">
+        <li class="event event--muted">Awaiting backend events…</li>
+      </ul>
+    </section>
+
+    <!-- SYSTEM HEALTH -->
+    <section class="card" style="grid-area: health">
+      <div class="card__head"><h2>System Health</h2></div>
+      <div class="health-grid">
+        <div class="health"><span class="health__label">Backend</span><span id="hBackend" class="health__value v">--</span></div>
+        <div class="health"><span class="health__label">Connection</span><span id="hConnection" class="health__value v">--</span></div>
+        <div class="health"><span class="health__label">Live FPS</span><span id="hFps" class="health__value v">--</span></div>
+        <div class="health"><span class="health__label">Processing</span><span id="hProc" class="health__value v">--</span></div>
+        <div class="health"><span class="health__label">Frame ID</span><span id="hFrame" class="health__value v">--</span></div>
+        <div class="health"><span class="health__label">Stream</span><span id="hStream" class="health__value v">--</span></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>TrafficAI Command Center · live data via <code>/state</code> &amp; <code>/video_feed</code></span>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>

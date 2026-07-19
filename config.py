@@ -9,13 +9,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
 BASE_DIR = Path(__file__).resolve().parent
 WEIGHTS_DIR = BASE_DIR / "weights"
+MODELS_DIR = BASE_DIR / "models"
 VIDEOS_DIR = BASE_DIR / "videos"
 OUTPUT_DIR = BASE_DIR / "output"
 CONFIGS_DIR = BASE_DIR / "configs"
@@ -36,15 +37,35 @@ VEHICLE_CLASS_MAP: Dict[int, str] = {
 
 HEURISTIC_LABELS: List[str] = ["auto_rickshaw", "ambulance"]
 
+# ---------------------------------------------------------------------------
+# Detection robustness / confirmation. These are plain, easy-to-tune constants
+# consumed by the analytics stages -- change them here without touching any
+# backend logic.
+# ---------------------------------------------------------------------------
+NOMINAL_FPS: float = 30.0                        # reference FPS for confirmation windows
+VEHICLE_TRACK_CONFIRMATION_SECONDS: float = 0.3  # a track must persist this long before it can be counted
+AMBULANCE_CONFIRMATION_SECONDS: float = 2.0      # an ambulance must persist this long before emergency mode
+AMBULANCE_MIN_CONFIDENCE: float = 0.80           # minimum detection confidence to treat a box as an ambulance
+COUNTING_LINE_POSITION: float = 0.5              # virtual counting line position (fraction 0..1 of the frame)
+COUNTING_LINE_AXIS: str = "y"                    # "y" = horizontal line, "x" = vertical line
+
 
 @dataclass
 class DetectorConfig:
-    weights_path: str = str(WEIGHTS_DIR / "yolo11s.pt")
-    confidence_threshold: float = 0.35
-    iou_threshold: float = 0.45
+    # Custom-trained traffic model (7 classes: ambulance, auto_rickshaw, car,
+    # bus, truck, motorcycle, bicycle). Point this back at WEIGHTS_DIR/"yolo11s.pt"
+    # to fall back to the stock COCO checkpoint.
+    weights_path: str = str(MODELS_DIR / "best.pt")
+    # Inference args mirror the reference standalone script (Ultralytics
+    # predict defaults) so detection quality matches exactly.
+    confidence_threshold: float = 0.25
+    iou_threshold: float = 0.7
     device: str = "auto"  # "auto", "cuda", "mps", "cpu", or "cuda:0" etc.
     image_size: int = 640
-    classes: List[int] = field(default_factory=lambda: list(VEHICLE_CLASS_MAP.keys()))
+    # None => no class filtering: detect every class the model was trained on
+    # (the custom model is vehicle-only). VEHICLE_CLASS_MAP is retained above
+    # only for reference / the optional COCO fallback.
+    classes: Optional[List[int]] = None
 
 
 @dataclass

@@ -19,6 +19,8 @@ package never requires Flask. Run modules from the project root.
 """
 from __future__ import annotations
 
+from .ambulance import AmbulancePriority
+from .clearance import IntersectionClearance
 from .config import BackendConfig, ServerConfig, get_config
 from .counter import VehicleCounter
 from .density import TrafficDensity
@@ -26,6 +28,8 @@ from .detector import FrameDetector, build_payload, detection_to_dict
 from .logger import DetectionLogger
 from .occupancy import LaneOccupancy
 from .pipeline import AnalyticsPipeline, DetectionConsumer
+from .recommendation import RecommendationEngine
+from .signal_controller import SignalController, SignalState
 from .statistics import TrafficStatistics
 
 __all__ = [
@@ -43,4 +47,10 @@ __all__ = [
     "LaneOccupancy",
     "TrafficStatistics",
     "DetectionLogger",
+    # signal-intelligence consumers
+    "RecommendationEngine",
+    "SignalController",
+    "SignalState",
+    "IntersectionClearance",
+    "AmbulancePriority",
 ]

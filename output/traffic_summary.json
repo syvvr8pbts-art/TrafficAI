@@ -1,25 +1,24 @@
 {
-  "session_start": "2026-07-18T22:18:15.371305",
-  "elapsed_seconds": 26.670323,
-  "total_unique_vehicles": 95,
+  "session_start": "2026-07-19T08:02:58.533196",
+  "elapsed_seconds": 1.653936,
+  "total_unique_vehicles": 25,
   "counts_by_type": {
-    "car": 55,
-    "auto_rickshaw": 9,
-    "motorcycle": 10,
-    "truck": 13,
-    "bicycle": 1,
-    "bus": 7
+    "car": 10,
+    "auto_rickshaw": 8,
+    "motorcycle": 3,
+    "ambulance": 1,
+    "truck": 3
   },
   "counts_by_lane": {
-    "lane_1_northbound": 42,
+    "lane_1_northbound": 11,
     "lane_2_southbound": 0
   },
   "congestion_by_lane": {
     "lane_1_northbound": {
       "lane": "lane_1_northbound",
-      "occupancy": 11,
-      "ratio": 1.0,
-      "level": "red"
+      "occupancy": 1,
+      "ratio": 0.17,
+      "level": "green"
     },
     "lane_2_southbound": {
       "lane": "lane_2_southbound",
@@ -29,6 +28,6 @@
     }
   },
   "vehicles_per_minute": {
-    "2026-07-18 22:18": 95
+    "2026-07-19 08:02": 25
   }
 }
